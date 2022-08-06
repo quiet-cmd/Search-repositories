@@ -60,6 +60,7 @@ function createAutocom(json, autocom) {
 
         li.addEventListener('click', e => {
             createDiv(name, login, stars);
+            input.value = '';
         });
 
     }
@@ -88,8 +89,6 @@ async function logic(text, autocom) {
 const input = document.querySelector('.search__input');
 const autocom = document.querySelector(".search__autocom");
 const repositories = document.querySelector(".repositories");
-/*const repository = repositories.getElementsByClassName('repositories__btn');
-console.log(repository)*/
 
 let fn = debounce( logic, 250 );
 
