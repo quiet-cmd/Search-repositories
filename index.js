@@ -6,35 +6,24 @@ function debounce(fn, ms) {
     }
 }
 
-async function getUrl(text) {
-    let responce = await fetch(`https://api.github.com/search/repositories?q=${text}`);
+async function getRepositories(text) {
+    const responce = await fetch(`https://api.github.com/search/repositories?q=${text}`);
     if(!responce.ok) return null;
-    let json = await responce.json();
+    const json = await responce.json();
     return json['items'].slice(0, 5);
 }
 
-function createDiv(name, owner, stars) {
-    let div = document.createElement('div');
-    div.classList = 'repositories__repository';
+function addRepository(name, owner, stars) {
 
-    let info = document.createElement('div');
-    info.classList = 'repositories__info';
-
-    let pName = document.createElement('p');
-    pName.textContent = `Name: ${name}`;
-    info.appendChild(pName);
-    let pOwner = document.createElement('p');
-    pOwner.textContent = `Owner: ${owner}`;
-    info.appendChild(pOwner);
-    let pStars = document.createElement('p');
-    pStars.textContent = `Stars: ${stars}`;
-    info.appendChild(pStars);
-
-    let btn = document.createElement('button');
-    btn.classList = 'repositories__btn';
-
-    div.appendChild(info);
-    div.appendChild(btn);
+    const div = document.createElement('div');
+    div.innerHTML =  `<div class="repositories__repository">
+                            <div class="repositories__info">
+                                <p>Name: ${name}</p>
+                                <p>Owner: ${owner}</p>
+                                <p>Stars: ${stars}</p>
+                            </div>
+                            <button class="repositories__btn" type="button"></button>
+                        </div>`;
 
     div.addEventListener('click', e => {
         e.stopImmediatePropagation();
@@ -43,66 +32,65 @@ function createDiv(name, owner, stars) {
         }
     });
 
-    repositories.appendChild(div);
+    repositories.append(div);
 }
 
 
-function createAutocom(json, autocom) {
-    let fragment = document.createDocumentFragment();
+function createAutocompleteList(json, autocom) {
+    const fragment = document.createDocumentFragment();
 
     for(let obj of json) {
-        let {name, owner: {login}, stargazers_count: stars} = obj;
+        const {name, owner: {login}, stargazers_count: stars} = obj;
 
-        let li = document.createElement('li');
+        const li = document.createElement('li');
         li.textContent = name;
         li.classList = `search__item`
-        fragment.appendChild(li);
+        fragment.append(li);
 
         li.addEventListener('click', e => {
-            createDiv(name, login, stars);
+            addRepository(name, login, stars);
             input.value = '';
         });
 
     }
-    autocom.appendChild(fragment);
+    autocom.append(fragment);
     autocom.classList.add('search__autocom-active');
 
 }
 
 
-function clearAutocom(autocom) {
+function deleteAutocompleteList(autocom) {
     autocom.classList.remove('search__autocom-active');
     autocom.innerHTML = '';
 }
 
 
-async function logic(text, autocom) {
-    let json = await getUrl(text);
+async function starter(text, autocom) {
+    const json = await getRepositories(text);
     if(json !== null ) {
-        clearAutocom(autocom);
-        createAutocom(json, autocom);
+        deleteAutocompleteList(autocom);
+        createAutocompleteList(json, autocom);
     }
 }
-
 
 
 const input = document.querySelector('.search__input');
 const autocom = document.querySelector(".search__autocom");
 const repositories = document.querySelector(".repositories");
 
-let fn = debounce( logic, 250 );
+const delayedStarter = debounce( starter, 250 );
 
 
 input.addEventListener('keyup', async (e)=> {
-    let str =  e.target.value.trim();
+    const str =  e.target.value.trim();
     if(str.length > 0) {
-        fn(str, autocom);
+        delayedStarter(str, autocom);
     } else {
-        clearAutocom(autocom);
+        deleteAutocompleteList(autocom);
     }
 });
 
 
 window.addEventListener('click', e => {
-    if( !e.target.closest('.search__autocom > *') ) clearAutocom(autocom);
+    if( !e.target.closest('.search__autocom > *') ) deleteAutocompleteList(autocom);
 });
